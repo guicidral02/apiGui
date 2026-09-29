@@ -1,40 +1,37 @@
-import mysql from 'mysql2/promise';
+import { manipularDB } from './db.js'
 
-const conexao = async () => {
-    const con = await mysql.createConnection({
-        host: '127.0.0.1',
-        port: 3306,
-        user: 'root',
-        password: '123456',
-        database: 'api'
-    });
+const getUsuarios = async (con) => {
+    const resultado = await con.query('SELECT * FROM usuarios;');
+    return resultado[0];
+};
 
-    return con;
-}
+const getUsuario = async (con, user) => {
+    const resultado = await con.query('SELECT * FROM usuarios WHERE id=?;', [user.id]);
+    return resultado[0][0];
+};
 
-const getUsuarios = async () => {
-    const con = await conexao();
-    let dados;
-
-    if (!id) {
-        dados = await con.query('SELECT * FROM usuarios;');
-    } else {
-        dados = await con.query('SELECT * FROM usuarios WHERE id=?;', [id]);
-    }
-
-    con.close();
-    return dados[0];   
-}
-
-const createUsuario = async (user) => {
-    const con = await conexao();
+const createUsuario = async (con, user) => {
     await con.query(
         'INSERT INTO usuarios (nome, email) VALUES (?, ?);',
         [user.nome, user.email]
     );
 
-    con.close();
     return `Usuário ${user.nome} adicionado ao MySQL!`;
 }
 
-console.log(await getUsuario());
+const deleteUsuario = async (con, user) => {
+    await con.query('DELETE FROM usuarios WHERE id=?', [user.id]);
+
+    return `Usuário ${user.id} deletado do MySQL!`;
+}
+
+const attUsuario = async (con, user) => {
+    await con.query(
+        'UPDATE usuarios SET nome = ?,  email = ? WHERE id = ?',
+        [user.nome, user.email, user.id]
+    );
+
+    return `Usuário ${user.nome} atualizado no MySQL!`;
+}
+
+// console.log(await manipularDB('mysql', {}, getUsuarios));
