@@ -1,28 +1,28 @@
-import express from 'express';
-import { manipularDB } from './db.js';
-import mysql from './mysql.js';
-import mongo from './mongodb.js';
+import { ObjectId } from "mongodb";
+import 'dotenv/config';
 
-const app = express();
-app.use(express.json())
+const getUsuarios = async (con) => await con.db("4INFO3").collection("Alunos").find({}).toArray();
+const getUsuario = async (con, user) => await con.db("4INFO3").collection("Alunos").findOne({_id: new ObjectId(user.id)});
 
-app.get('/alunos', async (req, res) => {
-    try {
-        const alunosSQL = await manipularDB('mysql', {}, mysql.getUsuarios);
-        const alunosMongo = await manipularDB('', {}, mongo.getUsuarios);
+const createUsuario = async (con, user) => {
+    await con.db("4INFO3").collection("Alunos").insertOne(user);
 
-        if (!alunosSQL[0] && !alunosMongo[0]){
-            res.status(404).json('Nenhum aluno encontrado nos bancos de dados!');
-        } else {
-            const resposta = { mysql: alunosSQL, mongo: alunosMongo};
-            res.status(200).json(resposta)
-        }
+    return `Usuário ${user.nome} adicionado ao MongoDB!`;
+}
 
-    } catch (e) {
-        console.error(e.message)
-    } 
-})
+const deleteUsuario = async (con, user) => {
+    await con.db("4INFO3").collection("Alunos").findOneAndDelete({_id: new ObjectId(user.id)});
 
-app.listen(3000, () => {
-    console.log(`Servidor rodando em http://localhost:3000`)
-})
+    return `Usuário ${user.id} deletado do MongoDB!`
+}
+
+const attUsuario = async (con, user) => {
+    const _id = new ObjectId(user.id);
+    delete user.id;
+    await con.db("4INFO3").collection("Alunos").replaceOne({ _id }, user);
+
+    return `Usuário ${user.nome} atualizado no MongoDB!`;
+}
+
+const mongo = { getUsuarios, getUsuario, createUsuario, deleteUsuario, attUsuario };
+export default mongo;
